@@ -55,11 +55,11 @@ class _PanicViewState extends State<PanicView> {
                   children: [
                     GestureDetector(
                       onLongPress: () {
-                        if (!isPanicking) {
-                          _startPanic();
-                        } else {
-                          _stopPanic(alarm["id"]);
-                        }
+                        // if (!isPanicking) {
+                        //   _startPanic();
+                        // } else {
+                        //   _stopPanic(alarm["id"]);
+                        // }
                       },
                       child: Image.asset(
                         isPanicking

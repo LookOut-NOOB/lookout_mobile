@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 
-import '../../app.dart';
 import '../../models/emergency_contact.dart';
 import '../../widgets/dialogs.dart';
 import '../app_viewmodel.dart';
@@ -89,40 +88,40 @@ class _AddContactViewState extends State<AddContactView> {
                 ),
                 onPressed: () {
                   if (_formKey.currentState!.validate()) {
-                    loadingDialog(context, message: "Adding contact");
+                    // loadingDialog(context, message: "Adding contact");
 
-                    if (widget.oldContact != null) {
-                      EmergencyContact contact = EmergencyContact(
-                        id: widget.oldContact!.id,
-                        name: nameCtrl.text,
-                        phoneNumber: phoneCtrl.text,
-                      );
-                      appViewModel.repository
-                          .editEmergencyContact(contact)
-                          .then((value) {
-                        popDialog(context);
-                        //pop bottom sheet
-                        Navigator.of(context).pop();
-                        appViewModel.repository.notify();
-                      });
-                      appViewModel.repository.notify();
-                      setState(() {});
-                      widget.onComplete();
-                    } else {
-                      EmergencyContact contact = EmergencyContact(
-                        id: uuid.v4(),
-                        name: nameCtrl.text,
-                        phoneNumber: phoneCtrl.text,
-                      );
-                      appViewModel.repository
-                          .registerEmergencyContact(contact)
-                          .then((value) {
-                        popDialog(context);
-                        widget.onComplete();
-                        //pop bottom sheet
-                        Navigator.of(context).pop();
-                      });
-                    }
+                    // if (widget.oldContact != null) {
+                    //   EmergencyContact contact = EmergencyContact(
+                    //     id: widget.oldContact!.id,
+                    //     name: nameCtrl.text,
+                    //     phoneNumber: phoneCtrl.text,
+                    //   );
+                    //   appViewModel.repository
+                    //       .editEmergencyContact(contact)
+                    //       .then((value) {
+                    //     popDialog(context);
+                    //     //pop bottom sheet
+                    //     Navigator.of(context).pop();
+                    //     appViewModel.repository.notify();
+                    //   });
+                    //   appViewModel.repository.notify();
+                    //   setState(() {});
+                    //   widget.onComplete();
+                    // } else {
+                    //   EmergencyContact contact = EmergencyContact(
+                    //     id: uuid.v4(),
+                    //     name: nameCtrl.text,
+                    //     phoneNumber: phoneCtrl.text,
+                    //   );
+                    //   appViewModel.repository
+                    //       .registerEmergencyContact(contact)
+                    //       .then((value) {
+                    //     popDialog(context);
+                    //     widget.onComplete();
+                    //     //pop bottom sheet
+                    //     Navigator.of(context).pop();
+                    //   });
+                    // }
                   }
                 },
                 child: Padding(

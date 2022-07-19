@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 
-import '../../app.dart';
-import '../../models/ambulance_request.dart';
-import '../../widgets/dialogs.dart';
 import '../app_viewmodel.dart';
 
 class RequestAmbulance extends StatefulWidget {
@@ -91,24 +88,24 @@ class _RequestAmbulanceState extends State<RequestAmbulance> {
                   ElevatedButton(
                       onPressed: () {
                         if (_formKey.currentState!.validate()) {
-                          loadingDialog(context, message: "Submitting request");
-                          AmbulanceRequest ambRequest = AmbulanceRequest(
-                              id: uuid.v1(),
-                              location: _locationCtrl.text,
-                              status: "pending",
-                              comment: _commentCtrl.text,
-                              userId: appViewModel.repository.profile?.uid,
-                              dateTime: DateTime.now());
-                          appViewModel.repository
-                              .requestAmbulance(ambRequest)
-                              .then((value) {
-                            popDialog(context);
-                            if (value) {
-                              //pop route
-                              Navigator.of(context).pop();
-                              args.resetSuccess!("ambulance");
-                            }
-                          });
+                          // loadingDialog(context, message: "Submitting request");
+                          // AmbulanceRequest ambRequest = AmbulanceRequest(
+                          //     id: uuid.v1(),
+                          //     location: _locationCtrl.text,
+                          //     status: "pending",
+                          //     comment: _commentCtrl.text,
+                          //     userId: appViewModel.repository.profile?.uid,
+                          //     dateTime: DateTime.now());
+                          // appViewModel.repository
+                          //     .requestAmbulance(ambRequest)
+                          //     .then((value) {
+                          //   popDialog(context);
+                          //   if (value) {
+                          //     //pop route
+                          //     Navigator.of(context).pop();
+                          //     args.resetSuccess!("ambulance");
+                          //   }
+                          // });
                         }
                       },
                       child: const Text("Request")),
