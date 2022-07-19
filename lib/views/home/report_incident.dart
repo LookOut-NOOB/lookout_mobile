@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 
-import '../../app.dart';
-import '../../models/incident.dart';
-import '../../widgets/dialogs.dart';
 import '../app_viewmodel.dart';
 
 class ReportIncident extends StatefulWidget {
@@ -107,27 +104,27 @@ class _ReportIncidentState extends State<ReportIncident> {
                   ElevatedButton(
                       onPressed: () {
                         if (_formKey.currentState!.validate()) {
-                          loadingDialog(context, message: "Reporting Incident");
-                          Incident incident = Incident(
-                            id: uuid.v1(),
-                            name: _incidentCtrl.text,
-                            location: _locationCtrl.text,
-                            dateTime: DateTime.now(),
-                            statement: _statementCtrl.text,
-                            userId: shareContact
-                                ? appViewModel.repository.profile?.uid
-                                : null,
-                          );
-                          appViewModel.repository
-                              .reportIncident(incident)
-                              .then((value) {
-                            popDialog(context);
-                            if (value) {
-                              //pop route
-                              Navigator.of(context).pop();
-                              args.resetSuccess!("report");
-                            }
-                          });
+                          // loadingDialog(context, message: "Reporting Incident");
+                          // Incident incident = Incident(
+                          //   id: uuid.v1(),
+                          //   name: _incidentCtrl.text,
+                          //   location: _locationCtrl.text,
+                          //   dateTime: DateTime.now(),
+                          //   statement: _statementCtrl.text,
+                          //   userId: shareContact
+                          //       ? appViewModel.repository.profile?.uid
+                          //       : null,
+                          // );
+                          // appViewModel.repository
+                          //     .reportIncident(incident)
+                          //     .then((value) {
+                          //   popDialog(context);
+                          //   if (value) {
+                          //     //pop route
+                          //     Navigator.of(context).pop();
+                          //     args.resetSuccess!("report");
+                          //   }
+                          // });
                         }
                       },
                       child: const Text("Report")),

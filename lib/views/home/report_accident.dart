@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 
-import '../../app.dart';
-import '../../models/accident.dart';
-import '../../widgets/dialogs.dart';
 import '../app_viewmodel.dart';
 
 class ReportAccident extends StatefulWidget {
@@ -97,26 +94,26 @@ class _ReportAccidentState extends State<ReportAccident> {
                   ElevatedButton(
                       onPressed: () {
                         if (_formKey.currentState!.validate()) {
-                          loadingDialog(context, message: "Reporting Accident");
-                          Accident accident = Accident(
-                            id: uuid.v1(),
-                            dateTime: DateTime.now(),
-                            location: _locationCtrl.text,
-                            statement: _statementCtrl.text,
-                            userId: shareContact
-                                ? appViewModel.repository.profile?.uid
-                                : null,
-                          );
-                          appViewModel.repository
-                              .reportAccident(accident)
-                              .then((value) {
-                            popDialog(context);
-                            if (value) {
-                              //pop route
-                              Navigator.of(context).pop();
-                              args.resetSuccess!("report");
-                            }
-                          });
+                          // loadingDialog(context, message: "Reporting Accident");
+                          // Accident accident = Accident(
+                          //   id: uuid.v1(),
+                          //   dateTime: DateTime.now(),
+                          //   location: _locationCtrl.text,
+                          //   statement: _statementCtrl.text,
+                          //   userId: shareContact
+                          //       ? appViewModel.repository.profile?.uid
+                          //       : null,
+                          // );
+                          // appViewModel.repository
+                          //     .reportAccident(accident)
+                          //     .then((value) {
+                          //   popDialog(context);
+                          //   if (value) {
+                          //     //pop route
+                          //     Navigator.of(context).pop();
+                          //     args.resetSuccess!("report");
+                          //   }
+                          // });
                         }
                       },
                       child: const Text("Report")),
