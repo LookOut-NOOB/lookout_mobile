@@ -9,4 +9,7 @@
 
 secrets/** filter=git-crypt diff=git-crypt
 
+# files that shouldnt be encrypted, just for emphasis
+.gitattributes !filter !diff`
+
 #end of git-crypt config
