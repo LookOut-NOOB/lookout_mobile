@@ -1,0 +1,12 @@
+
+#git-crypt config
+
+# Add files and folders to encrypt as follows
+
+# secretfile filter=git-crypt diff=git-crypt
+# *.key filter=git-crypt diff=git-crypt
+# secretdir/** filter=git-crypt diff=git-crypt
+
+secrets/** filter=git-crypt diff=git-crypt
+
+#end of git-crypt config
