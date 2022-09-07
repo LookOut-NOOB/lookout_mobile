@@ -25,4 +25,12 @@ class UserPreferences {
   Future<bool> deleteFcmToken() {
     return _preferences.remove('fcmToken');
   }
+
+  get location {
+    return _preferences.getString('location') ?? "Unknown";
+  }
+
+  Future<bool> setLocation(String value) {
+    return _preferences.setString('location', value);
+  }
 }

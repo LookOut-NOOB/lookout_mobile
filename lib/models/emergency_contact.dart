@@ -8,7 +8,7 @@ class EmergencyContact {
   factory EmergencyContact.fromMap(Map<String, dynamic> map) {
     return EmergencyContact(
       id: map["id"],
-      name: map["Name"],
+      name: map["name"],
       phoneNumber: map['phone'],
     );
   }

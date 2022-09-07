@@ -1,18 +1,25 @@
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:look_out/main.dart';
+import 'package:look_out/models/accident.dart';
+import 'package:look_out/models/alarm.dart';
+import 'package:look_out/models/ambulance_request.dart';
+import 'package:look_out/models/app_location.dart';
+import 'package:look_out/models/emergency_contact.dart';
+import 'package:look_out/models/incident.dart';
+import 'package:look_out/models/police_contact.dart';
+import 'package:look_out/models/profile.dart';
+import 'package:look_out/services/user_preferences.dart';
+import 'package:video_compress/video_compress.dart';
 
-import '../app.dart';
-import '../main.dart';
-import '../models/accident.dart';
-import '../models/alarm.dart';
-import '../models/ambulance_request.dart';
-import '../models/emergency_contact.dart';
-import '../models/incident.dart';
-import '../models/police_contact.dart';
-import '../models/profile.dart';
+import '../models/recorded_video.dart';
 
 class Repository {
   final Function notify;
+  List<PoliceContact> allPoliceContacts = [];
   List<PoliceContact> policeContacts = [];
   List<EmergencyContact> emergencyContacts = [];
   Profile? profile;
@@ -20,6 +27,8 @@ class Repository {
   final FirebaseFirestore db = FirebaseFirestore.instance;
   List<dynamic> records = [];
   bool isPanicking = false;
+  List<AppLocation> locations = [];
+  String currentLocation = "Unknown";
 
   Repository(this.notify);
 
@@ -29,23 +38,58 @@ class Repository {
     });
   }
 
-  Future getUserProfile(String? uid) async {
+  Future<Profile?> getUserProfile(String? uid) async {
+    Profile? thisProfile;
     try {
-      return await db.collection("users").doc(uid).get().then((value) {
+      await db.collection("users").doc(uid).get().then((value) {
         if (value.exists) {
           profile = Profile.fromMap(value.data()!);
+          thisProfile = profile;
           notify();
+          return thisProfile;
         }
       });
     } catch (e) {
       printDebug("Failed to getUser profile");
-      return null;
+      return Future.value(thisProfile);
     }
+    return null;
   }
 
   getPoliceContacts() {
     try {
       db.collection("policeContacts").get().then((value) {
+        if (value.docs.isNotEmpty) {
+          allPoliceContacts = value.docs
+              .map((pContactQs) => PoliceContact.fromMap(pContactQs.data()))
+              .toList();
+          notify();
+        }
+      });
+    } catch (e) {
+      printDebug("Failed to get police contacts");
+    }
+
+    // policeContacts = [
+    //   PoliceContact(
+    //       id: "stx890",
+    //       name: "Afande Sebagabo look_out",
+    //       phoneNumber: "+256 704436444"),
+    //   PoliceContact(
+    //       id: "9gmh90", name: "Nakendo Ibra", phoneNumber: "+256 726890000"),
+    // ];
+  }
+
+  getPoliceContactsForLocation(String locn) {
+    try {
+      db
+          .collection("policeContacts")
+          .where(
+            "location",
+            isEqualTo: locn,
+          )
+          .get()
+          .then((value) {
         if (value.docs.isNotEmpty) {
           policeContacts = value.docs
               .map((pContactQs) => PoliceContact.fromMap(pContactQs.data()))
@@ -60,7 +104,7 @@ class Repository {
     // policeContacts = [
     //   PoliceContact(
     //       id: "stx890",
-    //       name: "Afande Sebagabo Silva",
+    //       name: "Afande Sebagabo look_out",
     //       phoneNumber: "+256 704436444"),
     //   PoliceContact(
     //       id: "9gmh90", name: "Nakendo Ibra", phoneNumber: "+256 726890000"),
@@ -68,10 +112,12 @@ class Repository {
   }
 
   getEmergencyContacts() {
+    String userId =
+        profile?.uid ?? FirebaseAuth.instance.currentUser?.uid ?? "none";
     try {
       db
           .collection("users")
-          .doc(profile?.uid)
+          .doc(userId)
           .collection("emergencyContact")
           .get()
           .then((value) {
@@ -93,19 +139,27 @@ class Repository {
   }
 
   Future? initAppData() async {
-    return await getUserProfile(profile?.uid).then((value) async {
-      await getPoliceContacts();
+    return await getUserProfile(FirebaseAuth.instance.currentUser?.uid)
+        .then((value) async {
+      await getCurrentLocation().then((value) async {
+        await getPoliceContactsForLocation(value);
+      });
+      //await getPoliceContacts();
+
       await getEmergencyContacts();
       await getAllRecords();
+      await getRegisteredLocations();
     });
   }
 
   Future<bool> registerEmergencyContact(EmergencyContact contact) async {
+    String userId =
+        profile?.uid ?? FirebaseAuth.instance.currentUser?.uid ?? "none";
     bool result = false;
     try {
       await db
           .collection("users")
-          .doc(profile?.uid)
+          .doc(userId)
           .collection("emergencyContact")
           .add(contact.toMap())
           .then((value) {
@@ -119,11 +173,13 @@ class Repository {
   }
 
   Future<bool> editEmergencyContact(EmergencyContact contact) async {
+    String userId =
+        profile?.uid ?? FirebaseAuth.instance.currentUser?.uid ?? "none";
     bool result = false;
     try {
       await db
           .collection("users")
-          .doc(profile?.uid)
+          .doc(userId)
           .collection("emergencyContact")
           .doc(contact.id)
           .set(contact.toMap())
@@ -137,9 +193,26 @@ class Repository {
     return result;
   }
 
-  Future deleteEmergencyContact(EmergencyContact contact) {
+  Future<bool> deleteEmergencyContact(EmergencyContact contact) async {
     emergencyContacts.removeWhere((element) => (element.id == contact.id));
-    return Future.delayed(const Duration(seconds: 1));
+    String userId =
+        profile?.uid ?? FirebaseAuth.instance.currentUser?.uid ?? "none";
+    bool result = false;
+    try {
+      await db
+          .collection("users")
+          .doc(userId)
+          .collection("emergencyContact")
+          .doc(contact.id)
+          .delete()
+          .then((value) {
+        result = true;
+        getEmergencyContacts();
+      });
+    } catch (e) {
+      result = false;
+    }
+    return result;
   }
 
   Future<bool> reportAccident(Accident accident) async {
@@ -178,15 +251,29 @@ class Repository {
 
   Future<bool> requestAmbulance(AmbulanceRequest ambulanceRequest) async {
     bool result = false;
-    String id = uuid.v1();
     try {
       await db
-          .collection("ambulance_request")
-          .doc(id)
+          .collection("ambulance_requests")
+          .doc(ambulanceRequest.id)
           .set(ambulanceRequest.toMap())
           .then((value) {
         result = true;
         getAllRecords();
+      });
+    } catch (e) {
+      result = false;
+    }
+    return result;
+  }
+
+  Future<bool> cancelAmbulance(AmbulanceRequest ambulanceRequest) async {
+    bool result = false;
+    try {
+      await db
+          .collection("services")
+          .doc(ambulanceRequest.id)
+          .update({'status': "0"}).then((value) {
+        result = true;
       });
     } catch (e) {
       result = false;
@@ -217,7 +304,7 @@ class Repository {
       await db
           .collection("alarms")
           .doc(alarmId)
-          .update({'status': "cancelled"}).then((value) {
+          .update({'status': "0"}).then((value) {
         result = true;
         isPanicking = false;
       });
@@ -227,19 +314,43 @@ class Repository {
     return result;
   }
 
+  UploadTask? createImageUploadTask(String incidentId, File file) {
+    try {
+      String fileName = file.uri.pathSegments.last;
+      final ref = FirebaseStorage.instance
+          .ref('incidents/$incidentId')
+          .child('img/$fileName');
+      UploadTask uploadTask = ref.putFile(file);
+      return uploadTask;
+    } catch (e) {
+      printDebug('Failed to upload file!');
+      return null;
+    }
+  }
+
+  Future<MediaInfo?> compressRecordedVideo(RecordedVideo? recordedVideo) {
+    if (recordedVideo != null) {
+      return recordedVideo.justCompressVideo();
+    }
+    return Future.value(null);
+  }
+
   Future<QuerySnapshot<Map<String, dynamic>>> getAllAccidents() {
-    return db.collection("accidents").get();
+    String userId =
+        profile?.uid ?? FirebaseAuth.instance.currentUser?.uid ?? "none";
+    return db.collection("accidents").where("userId", isEqualTo: userId).get();
   }
 
   Future<QuerySnapshot<Map<String, dynamic>>> getAllIncidents() {
-    return db.collection("incidents").get();
+    String userId =
+        profile?.uid ?? FirebaseAuth.instance.currentUser?.uid ?? "none";
+    return db.collection("incidents").where("userId", isEqualTo: userId).get();
   }
 
   Future<QuerySnapshot<Map<String, dynamic>>> getAllAmbulanceRequests() {
-    return db
-        .collection("ambulance_request")
-        .where("userId", isEqualTo: profile?.uid)
-        .get();
+    String userId =
+        profile?.uid ?? FirebaseAuth.instance.currentUser?.uid ?? "none";
+    return db.collection("services").where("userId", isEqualTo: userId).get();
   }
 
   Future<DocumentSnapshot<Map<String, dynamic>>> getTip() {
@@ -247,11 +358,13 @@ class Repository {
   }
 
   Stream<QuerySnapshot<Map<String, dynamic>>>? activeAmbulanceRequest() {
+    String userId =
+        profile?.uid ?? FirebaseAuth.instance.currentUser?.uid ?? "none";
     try {
       return db
-          .collection("ambulance_request")
-          .where("userId", isEqualTo: profile?.uid)
-          .where("status", whereIn: ["pending", "accepted"])
+          .collection("services")
+          .where("userId", isEqualTo: userId)
+          .where("status", whereIn: ["1", "2"])
           .orderBy("dateTime", descending: true)
           .limit(1)
           .snapshots();
@@ -262,11 +375,14 @@ class Repository {
   }
 
   Stream<QuerySnapshot<Map<String, dynamic>>>? getActiveAlarm() {
+    String userId =
+        profile?.uid ?? FirebaseAuth.instance.currentUser?.uid ?? "none";
+
     try {
       return db
           .collection("alarms")
-          .where("userId", isEqualTo: profile?.uid)
-          .where("status", isEqualTo: "on")
+          .where("userId", isEqualTo: userId)
+          .where("status", isEqualTo: "1")
           .orderBy("dateTime", descending: true)
           .limit(1)
           .snapshots();
@@ -313,7 +429,92 @@ class Repository {
     return records;
   }
 
+  Future<List<AppLocation>?> getRegisteredLocations() async {
+    List<AppLocation> regLocatns = [];
+    try {
+      await db.collection("locations").get().then((value) {
+        if (value.docs.isNotEmpty) {
+          locations = value.docs
+              .map((locanQs) => AppLocation.fromMap(locanQs.data()))
+              .toList();
+          notify();
+          regLocatns = locations;
+          return regLocatns;
+        }
+      });
+    } catch (e) {
+      printDebug("Failed to get registered locations");
+      return Future.value(regLocatns);
+    }
+    return null;
+  }
+
+  Future<String> getCurrentLocation() async {
+    try {
+      String loc = UserPreferences().location;
+      currentLocation = loc;
+      notify();
+      return loc;
+    } catch (e) {
+      printDebug("Failed to get location");
+      return "Unkown";
+    }
+  }
+
+  Future<bool> setCurrentLocation(String location) async {
+    bool result = false;
+    try {
+      await UserPreferences().setLocation(location).then((res) {
+        result = res;
+        getCurrentLocation();
+      });
+      return result;
+    } catch (e) {
+      printDebug("===FAIL: $e");
+      printDebug("Failed to set location");
+      return Future.value(result);
+    }
+  }
+  // Future<List<String>> getLocationSuggestions(String input) async {
+  //   loc.Location currentLocation = loc.Location();
+  //   loc.LocationData? locationData;
+  //   List<String> resultList = [];
+  //   try {
+  //     locationData = await currentLocation.getLocation();
+  //     LatLon location = LatLon(locationData.latitude!, locationData.longitude!);
+  //     var googlePlace = GooglePlace(kGoogleApiKey);
+  //     var result = await googlePlace.autocomplete.get(
+  //       input,
+  //       // location: location,
+  //       // radius: 500,
+  //     );
+  //     var googlePlace2 = GooglePlace(kGoogleApiKey);
+  //     var result2 =
+  //         await googlePlace.queryAutocomplete.get(input).then((value) {
+  //       print("ddddddddddd");
+  //       printDebug(value?.predictions.toString() ?? "nothing");
+  //     });
+
+  //     List<AutocompletePrediction> predictions = result?.predictions ?? [];
+  //     print("**************");
+  //     printDebug(predictions);
+  //     num resultCount = result?.predictions?.length ?? 0;
+  //     for (var i = 0; i < resultCount; i++) {
+  //       String? locationName = predictions[i].description;
+  //       print(">>>>>>>>>>>>>>>>>>>");
+  //       printDebug(locationName.toString());
+  //       if (locationName != null) {
+  //         resultList.add(locationName);
+  //       }
+  //     }
+  //   } catch (e) {
+  //     print(e.toString());
+  //   }
+
+  //   return resultList;
+  // }
+
   Future logOut() {
-    return Future.delayed(const Duration(seconds: 1));
+    return FirebaseAuth.instance.signOut();
   }
 }

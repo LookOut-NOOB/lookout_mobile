@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
+import 'package:look_out/main.dart';
+import 'package:look_out/views/app_viewmodel.dart';
+import 'package:look_out/views/profile_view.dart';
+import 'package:look_out/widgets/dialogs.dart';
 
-import '../app.dart';
-import '../widgets/dialogs.dart';
-import 'app_viewmodel.dart';
-import 'login.dart';
-import 'profile_view.dart';
+import 'auth/login.dart';
 
 class SettingsView extends StatelessWidget {
   static const String routeName = "settings";

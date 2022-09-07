@@ -4,16 +4,18 @@ class Incident {
   final String type = "incident";
   String id;
   String name;
-  String location;
+  GeoPoint location;
   String? statement;
   String? userId;
   DateTime? dateTime;
+  List<String> imagesDownloadUrls;
 
   Incident(
       {required this.id,
       required this.name,
       required this.location,
       required this.dateTime,
+      required this.imagesDownloadUrls,
       this.statement,
       this.userId});
 
@@ -25,6 +27,7 @@ class Incident {
       userId: map['action'],
       statement: map['statement'],
       location: map['location'],
+      imagesDownloadUrls: List<String>.from(map['imagesDownloadUrls']),
       dateTime:
           DateTime.fromMillisecondsSinceEpoch(timestamp.millisecondsSinceEpoch),
     );
@@ -38,6 +41,7 @@ class Incident {
       'location': location,
       'userId': userId,
       'dateTime': dateTime,
+      'imagesDownloadUrls': imagesDownloadUrls,
     };
   }
 }

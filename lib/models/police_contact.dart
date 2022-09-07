@@ -9,9 +9,9 @@ class PoliceContact {
   factory PoliceContact.fromMap(Map<String, dynamic> map) {
     return PoliceContact(
       id: map["id"],
-      name: map["Name"],
+      name: map["name"],
       phoneNumber: map['phone'],
-      location: map["address"],
+      location: map["location"],
     );
   }
 }

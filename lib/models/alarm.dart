@@ -4,7 +4,7 @@ class Alarm {
   String id;
   String status;
   String? userId;
-  String? location;
+  GeoPoint? location;
   DateTime dateTime;
 
   Alarm({
@@ -38,6 +38,6 @@ class Alarm {
 }
 
 ///Status
-///=> on
-///=> off
-///=> cancelled
+///1=> on
+///2=> off
+///0=> cancelled

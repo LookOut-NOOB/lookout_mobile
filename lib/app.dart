@@ -1,26 +1,24 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_icons_null_safety/flutter_icons_null_safety.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:get_it/get_it.dart';
+import 'package:look_out/main.dart';
+import 'package:look_out/models/alarm.dart';
+import 'package:look_out/models/ambulance_request.dart';
+import 'package:look_out/views/alarm/panic_view.dart';
+import 'package:look_out/views/app_viewmodel.dart';
+import 'package:look_out/views/contacts/contacts_view.dart';
+import 'package:look_out/views/home/home_view.dart';
+import 'package:look_out/views/settings_view.dart';
+import 'package:look_out/widgets/dialogs.dart';
 import 'package:uuid/uuid.dart';
 
-import 'main.dart';
-import 'models/alarm.dart';
-import 'models/ambulance_request.dart';
-import 'views/alarm/panic_view.dart';
-import 'views/app_viewmodel.dart';
-import 'views/contacts/contacts_view.dart';
-import 'views/home/home_view.dart';
-import 'views/settings_view.dart';
-import 'widgets/dialogs.dart';
-
 const uuid = Uuid();
-const appName = "Look Out";
 final appScaffold = GlobalKey<ScaffoldState>();
 
 class App extends StatefulWidget {
+  static const String routeName = "app";
   const App({Key? key}) : super(key: key);
 
   @override
@@ -41,10 +39,15 @@ class _AppState extends State<App> with SingleTickerProviderStateMixin {
     _tabController = TabController(vsync: this, length: 3);
     showBottomSheet = _showBottomSheet;
     try {
-      appViewModel.repository
-          .getUserProfile(FirebaseAuth.instance.currentUser?.uid);
-      appViewModel.repository.getEmergencyContacts();
-      appViewModel.repository.getPoliceContacts();
+      appViewModel.repository.initAppData();
+      // appViewModel.repository
+      //     .getUserProfile(FirebaseAuth.instance.currentUser?.uid);
+      // appViewModel.repository.getEmergencyContacts();
+      // appViewModel.repository.getPoliceContacts();
+      // appViewModel.repository.getCurrentLocation();
+      // appViewModel.repository.getPoliceContactsForLocation(
+      //     appViewModel.repository.currentLocation);
+      // appViewModel.repository.getRegisteredLocations();
     } catch (e) {
       printDebug(e.toString());
       infoDialog(context, message: "Failed to initialise app data");
@@ -108,7 +111,6 @@ class _AppState extends State<App> with SingleTickerProviderStateMixin {
           width: MediaQuery.of(context).size.width,
           child: Image.asset(
             "assets/images/background_puzzle.jpg",
-            // "assets/images/dark.jpg",
             fit: BoxFit.cover,
             repeat: ImageRepeat.noRepeat,
             alignment: const Alignment(0.2, 4),
@@ -122,9 +124,7 @@ class _AppState extends State<App> with SingleTickerProviderStateMixin {
                 List<QueryDocumentSnapshot<Map<String, dynamic>>>
                     activeAlarmDocsQs = snapshot.data?.docs ?? [];
                 bool hasActiveAlarm =
-                    ((snapshot.connectionState == ConnectionState.done) &&
-                        snapshot.hasData &&
-                        activeAlarmDocsQs.isNotEmpty);
+                    (snapshot.hasData && activeAlarmDocsQs.isNotEmpty);
                 Alarm? activeAlarm;
                 if (hasActiveAlarm) {
                   activeAlarm = Alarm.fromMap(activeAlarmDocsQs[0].data());
@@ -135,14 +135,16 @@ class _AppState extends State<App> with SingleTickerProviderStateMixin {
                     builder: (context, snapshot) {
                       List<QueryDocumentSnapshot<Map<String, dynamic>>>
                           activeAmbulanceDocsQs = snapshot.data?.docs ?? [];
-                      bool hasActiveAmbulanceReq =
-                          ((snapshot.connectionState == ConnectionState.done) &&
-                              snapshot.hasData &&
-                              activeAmbulanceDocsQs.isNotEmpty);
+                      bool hasActiveAmbulanceReq = (snapshot.hasData &&
+                          activeAmbulanceDocsQs.isNotEmpty);
                       AmbulanceRequest? activeAmbReq;
                       if (hasActiveAmbulanceReq) {
                         activeAmbReq = AmbulanceRequest.fromMap(
                             activeAmbulanceDocsQs[0].data());
+                        FirebaseFirestore.instance
+                            .collection('ambulances')
+                            .where("is", isEqualTo: activeAmbReq.ambulanceId)
+                            .get();
                       }
 
                       return Scaffold(
@@ -174,8 +176,8 @@ class _AppState extends State<App> with SingleTickerProviderStateMixin {
                                   color: Theme.of(context).primaryColor,
                                   child: Padding(
                                     padding: const EdgeInsets.all(16.0),
-                                    child: activeAmbReq?.status == "pending"
-                                        ? contactingAmbulance()
+                                    child: activeAmbReq?.status == "1"
+                                        ? contactingAmbulance(activeAmbReq!)
                                         : ambReqaccepted(activeAmbReq!),
                                   ),
                                 ),
@@ -230,54 +232,152 @@ class _AppState extends State<App> with SingleTickerProviderStateMixin {
     );
   }
 
-  Widget contactingAmbulance() {
-    return Row(
-      children: const [
-        SpinKitThreeBounce(
-          color: Colors.white,
-          size: 20,
+  Widget contactingAmbulance(AmbulanceRequest activeAmbReq) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          children: const [
+            SpinKitThreeBounce(
+              color: Colors.white,
+              size: 20,
+            ),
+            SizedBox(
+              width: 20,
+            ),
+            Expanded(
+                child: Text(
+              "Contacting Ambulance",
+              style: TextStyle(color: Colors.white),
+            )),
+          ],
         ),
-        SizedBox(
-          width: 20,
+        const SizedBox(
+          height: 20,
         ),
-        Expanded(
-            child: Text(
-          "Contacting Ambulance",
-          style: TextStyle(color: Colors.white),
-        )),
+        const Divider(
+          color: Colors.white60,
+        ),
+        ElevatedButton(
+            style: ElevatedButton.styleFrom(primary: Colors.white),
+            onPressed: () {
+              loadingDialog(context, message: "Cancelling request");
+              appViewModel.repository
+                  .cancelAmbulance(activeAmbReq)
+                  .then((value) {
+                popDialog(context);
+              });
+            },
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: const [
+                Text(
+                  "Cancel Request",
+                  style: TextStyle(color: Colors.black),
+                ),
+              ],
+            )),
       ],
     );
   }
 
   Widget ambReqaccepted(AmbulanceRequest req) {
-    return Row(
-      children: [
-        IconButton(
-            onPressed: () {},
-            icon: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: const BoxDecoration(
-                    color: Colors.white, shape: BoxShape.circle),
-                child: const Icon(Icons.call_sharp))),
-        const SizedBox(
-          width: 20,
-        ),
-        Expanded(
-            child: Column(
-          children: [
-            const Text(
-              "Request Accepted",
-              style: TextStyle(color: Colors.white),
-            ),
-            Text(
-              req.ambulanceName!,
-              style: const TextStyle(
-                  color: Colors.white, fontWeight: FontWeight.bold),
-            ),
-          ],
-        )),
-      ],
-    );
+    return FutureBuilder<QuerySnapshot<Map<String, dynamic>>>(
+        future: FirebaseFirestore.instance
+            .collection('ambulances')
+            .where("id", isEqualTo: req.ambulanceId)
+            .get(),
+        builder: (context, snap) {
+          if (snap.connectionState == ConnectionState.waiting) {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
+          } else {
+            List<QueryDocumentSnapshot<Map<String, dynamic>>> docs =
+                snap.data?.docs ?? [];
+            if (docs.isNotEmpty) {
+              String ambulanceName = docs[0]["name"] ?? "Ambulance";
+              String ambulancePhone = docs[0]["phone"] ?? "0";
+              req.ambulanceName = ambulanceName;
+              req.ambulancePhoneNo = ambulancePhone;
+            }
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  "Request Accepted",
+                  style: Theme.of(context)
+                      .textTheme
+                      .subtitle1!
+                      .copyWith(color: Colors.white60),
+                ),
+                const SizedBox(
+                  height: 15,
+                ),
+                Text(
+                  req.ambulanceName ?? "Ambulance",
+                  style: Theme.of(context)
+                      .textTheme
+                      .headline6!
+                      .copyWith(color: Colors.white),
+                ),
+                const Divider(
+                  color: Colors.white60,
+                ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton.icon(
+                          style:
+                              ElevatedButton.styleFrom(primary: Colors.white),
+                          onPressed: () {
+                            try {
+                              launchCaller(req.ambulancePhoneNo ?? "none");
+                            } catch (e) {
+                              printDebug("Failed to call: $e");
+                            }
+                          },
+                          icon: const Icon(
+                            Feather.phone_call,
+                            color: Colors.black,
+                          ),
+                          label: const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 16),
+                            child: Text(
+                              "Call Ambulance",
+                              style: TextStyle(color: Colors.black),
+                            ),
+                          )),
+                    ),
+                    const SizedBox(
+                      width: 30,
+                    ),
+                    ElevatedButton(
+                        style: ElevatedButton.styleFrom(primary: Colors.white),
+                        onPressed: () {
+                          loadingDialog(context, message: "Cancelling request");
+                          appViewModel.repository
+                              .cancelAmbulance(req)
+                              .then((value) {
+                            popDialog(context);
+                          });
+                        },
+                        child: const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 16),
+                          child: Text(
+                            "Cancel request",
+                            style: TextStyle(color: Colors.black),
+                          ),
+                        )),
+                  ],
+                ),
+              ],
+            );
+          }
+        });
   }
 
   @override
@@ -337,7 +437,7 @@ class _RingingPopUpState extends State<RingingPopUp> {
                       _stopPanic(widget.alarm.id);
                     },
                     child: const Text(
-                      "Cancel",
+                      "Turn off",
                       style: TextStyle(
                         color: Colors.black,
                       ),

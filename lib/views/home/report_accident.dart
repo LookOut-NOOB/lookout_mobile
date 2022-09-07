@@ -1,6 +1,13 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
+import 'package:location/location.dart';
+import 'package:look_out/app.dart';
+import 'package:look_out/models/accident.dart';
+import 'package:look_out/services/location_service.dart';
+import 'package:look_out/widgets/dialogs.dart';
 
+import '../../main.dart';
 import '../app_viewmodel.dart';
 
 class ReportAccident extends StatefulWidget {
@@ -37,29 +44,26 @@ class _ReportAccidentState extends State<ReportAccident> {
               SliverList(
                   delegate: SliverChildListDelegate([
                 Card(
-                  child: Row(
-                    children: [
-                      Expanded(
-                          child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        child: TextFormField(
-                          decoration: _inputDeco(),
-                          controller: _locationCtrl,
-                          validator: (content) {
-                            if (content!.isEmpty) {
-                              return "Please provide the location";
-                            }
-                            return null;
-                          },
+                  child: Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child: Row(
+                      children: const [
+                        Icon(Icons.location_pin),
+                        SizedBox(
+                          width: 2,
                         ),
-                      )),
-                      const SizedBox(
-                        width: 2,
-                      ),
-                      IconButton(
-                          onPressed: () {},
-                          icon: const Icon(Icons.location_pin)),
-                    ],
+                        Expanded(
+                            child: Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 20),
+                          child: Text(
+                            "Your location is being captured automatically!",
+                            style: TextStyle(
+                              color: Colors.grey,
+                            ),
+                          ),
+                        )),
+                      ],
+                    ),
                   ),
                 ),
                 const Divider(),
@@ -94,26 +98,48 @@ class _ReportAccidentState extends State<ReportAccident> {
                   ElevatedButton(
                       onPressed: () {
                         if (_formKey.currentState!.validate()) {
-                          // loadingDialog(context, message: "Reporting Accident");
-                          // Accident accident = Accident(
-                          //   id: uuid.v1(),
-                          //   dateTime: DateTime.now(),
-                          //   location: _locationCtrl.text,
-                          //   statement: _statementCtrl.text,
-                          //   userId: shareContact
-                          //       ? appViewModel.repository.profile?.uid
-                          //       : null,
-                          // );
-                          // appViewModel.repository
-                          //     .reportAccident(accident)
-                          //     .then((value) {
-                          //   popDialog(context);
-                          //   if (value) {
-                          //     //pop route
-                          //     Navigator.of(context).pop();
-                          //     args.resetSuccess!("report");
-                          //   }
-                          // });
+                          loadingDialog(context, message: "Reporting Accident");
+                          LocationService()
+                              .getCurrentLocation()
+                              .then((LocationData? locationData) {
+                            GeoPoint? geoPoint;
+                            if (locationData != null) {
+                              geoPoint = GeoPoint(locationData.latitude!,
+                                  locationData.longitude!);
+                              Accident accident = Accident(
+                                id: uuid.v1(),
+                                dateTime: DateTime.now(),
+                                location: geoPoint,
+                                statement: _statementCtrl.text,
+                                userId: shareContact
+                                    ? appViewModel.repository.profile?.uid
+                                    : null,
+                              );
+                              appViewModel.repository
+                                  .reportAccident(accident)
+                                  .then((value) {
+                                popDialog(context);
+                                if (value) {
+                                  //pop route
+                                  Navigator.of(context).pop();
+                                  args.resetSuccess!("report");
+                                }
+                              });
+                            } else {
+                              popDialog(context);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                      content: Text(
+                                          'Failed to get current location')));
+                            }
+                          }).catchError((error) {
+                            popDialog(context);
+                            printDebug("Error getting location: $error");
+                            ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text(
+                                        'Error getting current location')));
+                          });
                         }
                       },
                       child: const Text("Report")),

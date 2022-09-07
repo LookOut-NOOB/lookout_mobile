@@ -1,6 +1,13 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
+import 'package:location/location.dart';
+import 'package:look_out/main.dart';
+import 'package:look_out/models/ambulance_request.dart';
+import 'package:look_out/services/location_service.dart';
+import 'package:look_out/widgets/dialogs.dart';
 
+import '../../app.dart';
 import '../app_viewmodel.dart';
 
 class RequestAmbulance extends StatefulWidget {
@@ -36,29 +43,26 @@ class _RequestAmbulanceState extends State<RequestAmbulance> {
               SliverList(
                   delegate: SliverChildListDelegate([
                 Card(
-                  child: Row(
-                    children: [
-                      Expanded(
-                          child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        child: TextFormField(
-                          decoration: _inputDeco(),
-                          controller: _locationCtrl,
-                          validator: (content) {
-                            if (content!.isEmpty) {
-                              return "Choose a location";
-                            }
-                            return null;
-                          },
+                  child: Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child: Row(
+                      children: const [
+                        Icon(Icons.location_pin),
+                        SizedBox(
+                          width: 2,
                         ),
-                      )),
-                      const SizedBox(
-                        width: 2,
-                      ),
-                      IconButton(
-                          onPressed: () {},
-                          icon: const Icon(Icons.location_pin)),
-                    ],
+                        Expanded(
+                            child: Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 20),
+                          child: Text(
+                            "Your location is being captured automatically!",
+                            style: TextStyle(
+                              color: Colors.grey,
+                            ),
+                          ),
+                        )),
+                      ],
+                    ),
                   ),
                 ),
                 const Divider(),
@@ -88,24 +92,46 @@ class _RequestAmbulanceState extends State<RequestAmbulance> {
                   ElevatedButton(
                       onPressed: () {
                         if (_formKey.currentState!.validate()) {
-                          // loadingDialog(context, message: "Submitting request");
-                          // AmbulanceRequest ambRequest = AmbulanceRequest(
-                          //     id: uuid.v1(),
-                          //     location: _locationCtrl.text,
-                          //     status: "pending",
-                          //     comment: _commentCtrl.text,
-                          //     userId: appViewModel.repository.profile?.uid,
-                          //     dateTime: DateTime.now());
-                          // appViewModel.repository
-                          //     .requestAmbulance(ambRequest)
-                          //     .then((value) {
-                          //   popDialog(context);
-                          //   if (value) {
-                          //     //pop route
-                          //     Navigator.of(context).pop();
-                          //     args.resetSuccess!("ambulance");
-                          //   }
-                          // });
+                          loadingDialog(context, message: "Submitting request");
+                          LocationService()
+                              .getCurrentLocation()
+                              .then((LocationData? locationData) {
+                            GeoPoint? geoPoint;
+                            if (locationData != null) {
+                              geoPoint = GeoPoint(locationData.latitude!,
+                                  locationData.longitude!);
+                              AmbulanceRequest ambRequest = AmbulanceRequest(
+                                  id: uuid.v1(),
+                                  location: geoPoint,
+                                  status: "1",
+                                  comment: _commentCtrl.text,
+                                  userId: appViewModel.repository.profile?.uid,
+                                  dateTime: DateTime.now());
+                              appViewModel.repository
+                                  .requestAmbulance(ambRequest)
+                                  .then((value) {
+                                popDialog(context);
+                                if (value) {
+                                  //pop route
+                                  Navigator.of(context).pop();
+                                  args.resetSuccess!("ambulance");
+                                }
+                              });
+                            } else {
+                              popDialog(context);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                      content: Text(
+                                          'Failed to get current location')));
+                            }
+                          }).catchError((error) {
+                            popDialog(context);
+                            printDebug("Error getting location: $error");
+                            ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text(
+                                        'Error getting current location')));
+                          });
                         }
                       },
                       child: const Text("Request")),
@@ -142,7 +168,7 @@ class _RequestAmbulanceState extends State<RequestAmbulance> {
 
 
 ///Ambulance request status
-///=>pending
-///=>accepted
-///=>complete
-///=>cancelled
+///1=>pending
+///2=>accepted
+///3=>complete
+///0=>cancelled
