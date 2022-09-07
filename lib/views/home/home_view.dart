@@ -27,6 +27,11 @@ class _HomeViewState extends State<HomeView> {
   @override
   void initState() {
     records = appViewModel.repository.records;
+    // records.sort((record1, record2) {
+    //   DateTime dt1 = record1.dateTime;
+    //   DateTime dt2 = record2.dateTime;
+    //   return dt1.compareTo(dt2);
+    // });
     super.initState();
   }
 
@@ -126,6 +131,7 @@ class _HomeViewState extends State<HomeView> {
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16)),
               child: Container(
+                color: Colors.blue.withOpacity(0.05),
                 width: MediaQuery.of(context).size.width,
                 padding: const EdgeInsets.all(16.0).copyWith(top: 8),
                 child: Column(
@@ -143,7 +149,7 @@ class _HomeViewState extends State<HomeView> {
                     GridView(
                       gridDelegate:
                           const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2),
+                              crossAxisCount: 2, crossAxisSpacing: 5.0),
                       shrinkWrap: true,
                       padding: const EdgeInsets.all(1),
                       physics: const NeverScrollableScrollPhysics(),

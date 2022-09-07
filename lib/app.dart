@@ -32,6 +32,7 @@ class _AppState extends State<App> with SingleTickerProviderStateMixin {
   bool showTips = true;
   VoidCallback? showBottomSheet;
   bool isPanicking = true;
+  bool isLoadingInPopUp = false;
 
   @override
   void initState() {
@@ -177,7 +178,9 @@ class _AppState extends State<App> with SingleTickerProviderStateMixin {
                                     padding: const EdgeInsets.all(16.0),
                                     child: activeAmbReq?.status == "1"
                                         ? contactingAmbulance(activeAmbReq!)
-                                        : ambReqaccepted(activeAmbReq!),
+                                        : activeAmbReq != null
+                                            ? ambReqaccepted(activeAmbReq)
+                                            : const SizedBox(),
                                   ),
                                 ),
                               ]
@@ -354,23 +357,30 @@ class _AppState extends State<App> with SingleTickerProviderStateMixin {
                     const SizedBox(
                       width: 30,
                     ),
-                    ElevatedButton(
-                        style: ElevatedButton.styleFrom(primary: Colors.white),
-                        onPressed: () {
-                          loadingDialog(context, message: "Cancelling request");
-                          appViewModel.repository
-                              .cancelAmbulance(req)
-                              .then((value) {
-                            popDialog(context);
-                          });
-                        },
-                        child: const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 16),
-                          child: Text(
-                            "Cancel request",
-                            style: TextStyle(color: Colors.black),
-                          ),
-                        )),
+                    Center(
+                      child: isLoadingInPopUp
+                          ? const CircularProgressIndicator()
+                          : ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                  primary: Colors.white),
+                              onPressed: () {
+                                // loadingDialog(context, message: "Cancelling request");
+                                isLoadingInPopUp = true;
+                                appViewModel.repository
+                                    .cancelAmbulance(req)
+                                    .then((value) {
+                                  isLoadingInPopUp = false;
+                                  // popDialog(context);
+                                });
+                              },
+                              child: const Padding(
+                                padding: EdgeInsets.symmetric(vertical: 16),
+                                child: Text(
+                                  "Cancel request",
+                                  style: TextStyle(color: Colors.black),
+                                ),
+                              )),
+                    ),
                   ],
                 ),
               ],

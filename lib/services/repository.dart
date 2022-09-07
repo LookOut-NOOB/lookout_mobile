@@ -338,7 +338,11 @@ class Repository {
   Future<QuerySnapshot<Map<String, dynamic>>> getAllIncidents() {
     String userId =
         profile?.uid ?? FirebaseAuth.instance.currentUser?.uid ?? "none";
-    return db.collection("incidents").where("userId", isEqualTo: userId).get();
+    return db
+        .collection("incidents")
+        .where("userId", isEqualTo: userId)
+        .orderBy("dateTime", descending: true)
+        .get();
   }
 
   Future<QuerySnapshot<Map<String, dynamic>>> getAllAmbulanceRequests() {
@@ -347,6 +351,7 @@ class Repository {
     return db
         .collection("ambulance_requests")
         .where("userId", isEqualTo: userId)
+        .orderBy("dateTime", descending: true)
         .get();
   }
 
@@ -399,6 +404,11 @@ class Repository {
           Map<String, dynamic> incMap = element.data();
           Incident incId = Incident.fromMap(incMap);
           records.add(incId);
+          records.sort((record2, record1) {
+            DateTime dt1 = record1.dateTime;
+            DateTime dt2 = record2.dateTime;
+            return dt1.compareTo(dt2);
+          });
         }
       });
     } catch (e) {
@@ -412,6 +422,11 @@ class Repository {
           Map<String, dynamic> aReqMap = element.data();
           AmbulanceRequest aReqId = AmbulanceRequest.fromMap(aReqMap);
           records.add(aReqId);
+          records.sort((record2, record1) {
+            DateTime dt1 = record1.dateTime;
+            DateTime dt2 = record2.dateTime;
+            return dt1.compareTo(dt2);
+          });
         }
       });
     } catch (e) {
