@@ -13,7 +13,10 @@ import '../app_viewmodel.dart';
 class RequestAmbulance extends StatefulWidget {
   static const String routeName = "/request_ambulance";
   final Function(String type)? resetSuccess;
-  const RequestAmbulance({Key? key, this.resetSuccess}) : super(key: key);
+  final String label;
+  const RequestAmbulance(
+      {Key? key, this.resetSuccess, this.label = "Request Ambulance"})
+      : super(key: key);
 
   @override
   _RequestAmbulanceState createState() => _RequestAmbulanceState();
@@ -32,7 +35,7 @@ class _RequestAmbulanceState extends State<RequestAmbulance> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Request Ambulance"),
+        title: Text(widget.label),
       ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
@@ -42,6 +45,23 @@ class _RequestAmbulanceState extends State<RequestAmbulance> {
             slivers: [
               SliverList(
                   delegate: SliverChildListDelegate([
+                Container(
+                  padding: const EdgeInsets.all(2),
+                  height: MediaQuery.of(context).size.width / 4,
+                  width: MediaQuery.of(context).size.width / 4,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    // color: Colors.black12,
+                    borderRadius: BorderRadius.circular(50),
+                  ),
+                  child: Hero(
+                    tag: widget.label,
+                    child: Image.asset(
+                      "assets/images/ambulance.png",
+                      color: Colors.red,
+                    ),
+                  ),
+                ),
                 Card(
                   child: Padding(
                     padding: const EdgeInsets.all(20.0),
@@ -55,7 +75,7 @@ class _RequestAmbulanceState extends State<RequestAmbulance> {
                             child: Padding(
                           padding: EdgeInsets.symmetric(horizontal: 20),
                           child: Text(
-                            "Your location is being captured automatically!",
+                            "Your location is being captured and submitted automatically!",
                             style: TextStyle(
                               color: Colors.grey,
                             ),
@@ -76,7 +96,7 @@ class _RequestAmbulanceState extends State<RequestAmbulance> {
                     height: 1,
                   ),
                   const Text(
-                      "Incase of any additional details, you may want the emergency team to know, or another contact phone. Please provide the details below."),
+                      "Incase of any additional details, or another contact phone number. Please provide the details below."),
                   const SizedBox(
                     height: 20,
                   ),

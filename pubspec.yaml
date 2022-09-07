@@ -63,6 +63,7 @@ dependencies:
   chewie: ^1.1.0
   progresso: ^0.3.0
   flutterfire_ui: ^0.4.3+7
+  lottie: ^1.4.2
 
 dev_dependencies:
   flutter_test:
@@ -84,6 +85,7 @@ flutter:
     - assets/
     - assets/images/
     - assets/icons/
+    - assets/animations/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware

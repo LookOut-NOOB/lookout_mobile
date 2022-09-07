@@ -25,6 +25,37 @@ class LoginView extends StatelessWidget {
           Navigator.of(context).pushNamedAndRemoveUntil("/", (route) => false);
         }),
       ],
+      headerBuilder: (context, constraints, shrinkOffset) {
+        return Container(
+          color: Colors.white,
+          child: Center(
+            child: Image.asset(
+              "assets/images/logo.png",
+              width: 80,
+            ),
+          ),
+        );
+      },
+      subtitleBuilder: (context, action) {
+        return SizedBox(
+          height: MediaQuery.of(context).size.height / 3,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: const [
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 40),
+                child: Text(
+                  appSlogan,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 18,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
 
     // return Scaffold(

@@ -54,6 +54,20 @@ showToast(BuildContext context, {required String message}) {
   ));
 }
 
+void showSnack(context, message, {Duration? duration}) {
+  FocusScope.of(context).requestFocus(FocusNode());
+  SnackBar snackBar;
+  if (duration != null) {
+    snackBar = SnackBar(
+      content: Text(message),
+      duration: duration,
+    );
+  } else {
+    snackBar = SnackBar(content: Text(message));
+  }
+  ScaffoldMessenger.of(context).showSnackBar(snackBar);
+}
+
 popDialog(BuildContext context) {
   Navigator.of(context).pop();
 }

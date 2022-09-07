@@ -270,7 +270,7 @@ class Repository {
     bool result = false;
     try {
       await db
-          .collection("services")
+          .collection("ambulance_requests")
           .doc(ambulanceRequest.id)
           .update({'status': "0"}).then((value) {
         result = true;
@@ -335,12 +335,6 @@ class Repository {
     return Future.value(null);
   }
 
-  Future<QuerySnapshot<Map<String, dynamic>>> getAllAccidents() {
-    String userId =
-        profile?.uid ?? FirebaseAuth.instance.currentUser?.uid ?? "none";
-    return db.collection("accidents").where("userId", isEqualTo: userId).get();
-  }
-
   Future<QuerySnapshot<Map<String, dynamic>>> getAllIncidents() {
     String userId =
         profile?.uid ?? FirebaseAuth.instance.currentUser?.uid ?? "none";
@@ -350,7 +344,10 @@ class Repository {
   Future<QuerySnapshot<Map<String, dynamic>>> getAllAmbulanceRequests() {
     String userId =
         profile?.uid ?? FirebaseAuth.instance.currentUser?.uid ?? "none";
-    return db.collection("services").where("userId", isEqualTo: userId).get();
+    return db
+        .collection("ambulance_requests")
+        .where("userId", isEqualTo: userId)
+        .get();
   }
 
   Future<DocumentSnapshot<Map<String, dynamic>>> getTip() {
@@ -362,7 +359,7 @@ class Repository {
         profile?.uid ?? FirebaseAuth.instance.currentUser?.uid ?? "none";
     try {
       return db
-          .collection("services")
+          .collection("ambulance_requests")
           .where("userId", isEqualTo: userId)
           .where("status", whereIn: ["1", "2"])
           .orderBy("dateTime", descending: true)
@@ -395,15 +392,6 @@ class Repository {
   Future<List<dynamic>> getAllRecords() async {
     records = [];
     try {
-      await getAllAccidents().then((accidentsValue) {
-        List<QueryDocumentSnapshot<Map<String, dynamic>>> accidentQsList =
-            accidentsValue.docs;
-        for (var element in accidentQsList) {
-          Map<String, dynamic> accMap = element.data();
-          Accident accId = Accident.fromMap(accMap);
-          records.add(accId);
-        }
-      });
       await getAllIncidents().then((incidentsValue) {
         List<QueryDocumentSnapshot<Map<String, dynamic>>> incidentQsList =
             incidentsValue.docs;
@@ -413,17 +401,21 @@ class Repository {
           records.add(incId);
         }
       });
+    } catch (e) {
+      printDebug("couldn't get incident records:$e");
+    }
+    try {
       await getAllAmbulanceRequests().then((aRequestsValue) {
         List<QueryDocumentSnapshot<Map<String, dynamic>>> aRequestsQsList =
             aRequestsValue.docs;
         for (var element in aRequestsQsList) {
           Map<String, dynamic> aReqMap = element.data();
-          Incident aReqId = Incident.fromMap(aReqMap);
+          AmbulanceRequest aReqId = AmbulanceRequest.fromMap(aReqMap);
           records.add(aReqId);
         }
       });
     } catch (e) {
-      printDebug("Coudn't get records");
+      printDebug("couldn't get ambulance records:$e");
     }
 
     return records;
@@ -475,6 +467,7 @@ class Repository {
       return Future.value(result);
     }
   }
+
   // Future<List<String>> getLocationSuggestions(String input) async {
   //   loc.Location currentLocation = loc.Location();
   //   loc.LocationData? locationData;

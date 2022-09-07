@@ -6,7 +6,6 @@ import 'package:look_out/models/accident.dart';
 import 'package:look_out/models/ambulance_request.dart';
 import 'package:look_out/models/incident.dart';
 import 'package:look_out/models/tip.dart';
-import 'package:look_out/views/home/report_accident.dart';
 import 'package:look_out/views/home/report_incident.dart';
 import 'package:look_out/views/home/request_ambulance.dart';
 
@@ -144,54 +143,16 @@ class _HomeViewState extends State<HomeView> {
                     GridView(
                       gridDelegate:
                           const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 3),
+                              crossAxisCount: 2),
                       shrinkWrap: true,
                       padding: const EdgeInsets.all(1),
                       physics: const NeverScrollableScrollPhysics(),
                       children: [
                         quickActionTile(
-                          label: "Report accident",
-                          icon: const Icon(
-                            Icons.taxi_alert,
-                            size: 30,
-                            color: Colors.black,
-                          ),
-                          onTap: () {
-                            Navigator.of(context)
-                                .pushNamed(ReportAccident.routeName,
-                                    arguments: ReportAccident(
-                              resetSuccess: (String result) {
-                                result = result;
-                                resultDialog(result);
-                              },
-                            ));
-                          },
-                        ),
-                        quickActionTile(
-                          label: "Request ambulance",
-                          icon: Stack(
-                            children: [
-                              const Icon(
-                                Icons.taxi_alert,
-                                size: 34,
-                                color: Colors.black,
-                              ),
-                              Positioned(
-                                top: 0,
-                                right: 0,
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey.shade300,
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                  child: const Icon(
-                                    Icons.local_hospital_outlined,
-                                    size: 21,
-                                    color: Colors.black,
-                                  ),
-                                ),
-                              ),
-                            ],
+                          label: "Request Ambulance",
+                          icon: Image.asset(
+                            "assets/images/ambulance.png",
+                            color: Colors.red,
                           ),
                           onTap: () {
                             Navigator.of(context)
@@ -206,11 +167,9 @@ class _HomeViewState extends State<HomeView> {
                         ),
                         quickActionTile(
                           label: "Report Incident",
-                          icon: const Icon(
-                            //Icons.add_reaction_rounded,
-                            Icons.warning_amber_rounded,
-                            size: 34,
-                            color: Colors.black,
+                          icon: Image.asset(
+                            "assets/images/report.png",
+                            color: Colors.blue.shade400,
                           ),
                           onTap: () {
                             Navigator.of(context)
@@ -326,6 +285,7 @@ class _HomeViewState extends State<HomeView> {
                       ListView.builder(
                           shrinkWrap: true,
                           itemCount: records.length,
+                          physics: const NeverScrollableScrollPhysics(),
                           itemBuilder: (context, index) {
                             return records[index].type == "accident"
                                 ? AccidentTile(accident: records[index])
@@ -348,37 +308,42 @@ class _HomeViewState extends State<HomeView> {
 
   Widget quickActionTile(
       {required String label, required Widget icon, void Function()? onTap}) {
-    return Container(
-      decoration: const BoxDecoration(
-          borderRadius: BorderRadius.all(Radius.circular(16))),
-      margin: const EdgeInsets.all(4),
-      child: InkWell(
-        onTap: onTap,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(2),
-              height: 45,
-              width: 45,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: Colors.black12,
-                borderRadius: BorderRadius.circular(50),
+    return Card(
+      child: Container(
+        decoration: const BoxDecoration(
+            borderRadius: BorderRadius.all(Radius.circular(16))),
+        margin: const EdgeInsets.all(4),
+        child: InkWell(
+          onTap: onTap,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(2),
+                height: MediaQuery.of(context).size.width / 7,
+                width: MediaQuery.of(context).size.width / 7,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  // color: Colors.black12,
+                  borderRadius: BorderRadius.circular(50),
+                ),
+                child: Hero(tag: label, child: icon),
               ),
-              child: icon,
-            ),
-            const SizedBox(
-              height: 4,
-            ),
-            Text(
-              label,
-              textAlign: TextAlign.center,
-              overflow: TextOverflow.fade,
-              maxLines: 2,
-            ),
-          ],
+              const SizedBox(
+                height: 16,
+              ),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                overflow: TextOverflow.fade,
+                maxLines: 2,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -551,10 +516,22 @@ class AmbulanceTile extends StatelessWidget {
               indent: 20,
             ),
             const Text("Requested for ambulance"),
-            Text(
-              "status: ${ambulance.status}",
-              style: const TextStyle(color: Colors.black38),
-            ),
+            Builder(builder: (context) {
+              String statusValue = "";
+              if (ambulance.status == "0") {
+                statusValue = "Cancelled";
+              } else if (ambulance.status == "1") {
+                statusValue = "Pending";
+              } else if (ambulance.status == "2") {
+                statusValue = "Accepted";
+              } else {
+                statusValue = "Complete";
+              }
+              return Text(
+                "status: $statusValue",
+                style: const TextStyle(color: Colors.black38),
+              );
+            }),
           ],
         ),
       ),

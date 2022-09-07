@@ -8,6 +8,8 @@ class Incident {
   String? statement;
   String? userId;
   DateTime? dateTime;
+  String? videoUrl;
+  String? videoThumbnailUrl;
   List<String> imagesDownloadUrls;
 
   Incident(
@@ -15,6 +17,8 @@ class Incident {
       required this.name,
       required this.location,
       required this.dateTime,
+      this.videoUrl,
+      this.videoThumbnailUrl,
       required this.imagesDownloadUrls,
       this.statement,
       this.userId});
@@ -27,6 +31,8 @@ class Incident {
       userId: map['action'],
       statement: map['statement'],
       location: map['location'],
+      videoUrl: map['videoUrl'],
+      videoThumbnailUrl: map['videoThumbnailUrl'],
       imagesDownloadUrls: List<String>.from(map['imagesDownloadUrls']),
       dateTime:
           DateTime.fromMillisecondsSinceEpoch(timestamp.millisecondsSinceEpoch),
@@ -41,6 +47,8 @@ class Incident {
       'location': location,
       'userId': userId,
       'dateTime': dateTime,
+      'videoUrl': videoUrl,
+      'videoThumbnailUrl': videoThumbnailUrl,
       'imagesDownloadUrls': imagesDownloadUrls,
     };
   }

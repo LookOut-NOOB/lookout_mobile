@@ -146,7 +146,6 @@ class _AppState extends State<App> with SingleTickerProviderStateMixin {
                             .where("is", isEqualTo: activeAmbReq.ambulanceId)
                             .get();
                       }
-
                       return Scaffold(
                         key: appScaffold,
                         backgroundColor: Colors.transparent,

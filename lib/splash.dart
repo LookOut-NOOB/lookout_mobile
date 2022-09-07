@@ -6,6 +6,7 @@ import 'package:look_out/app.dart';
 import 'package:look_out/main.dart';
 import 'package:look_out/views/auth/login.dart';
 import 'package:look_out/views/auth/user_form.dart';
+import 'package:lottie/lottie.dart';
 
 import 'views/app_viewmodel.dart';
 
@@ -30,13 +31,26 @@ class _SplashScreenState extends State<SplashScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Padding(
-        padding: const EdgeInsets.all(30.0),
+        padding: const EdgeInsets.all(50),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: const [
-            Center(
-              child: Text("Loading"),
-            )
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Expanded(
+              child: Center(
+                child: Image.asset(
+                  "assets/images/logo.png",
+                  color: const Color(0xffED1F44),
+                  height: 100,
+                  width: 150,
+                ),
+              ),
+            ),
+            Lottie.asset(
+              "assets/animations/loading.json",
+              fit: BoxFit.contain,
+              height: 100,
+              width: 100,
+            ),
           ],
         ),
       ),
@@ -44,10 +58,8 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   _checkLoggedIn(context) async {
-    printDebug(":::::Checking loged in");
     try {
       var user = FirebaseAuth.instance.currentUser;
-      printDebug(" ::::: is_$user");
       if (user != null) {
         findUserFromDb(context, user.uid);
       } else {

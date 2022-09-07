@@ -33,7 +33,6 @@ class _ReportIncidentState extends State<ReportIncident> {
   final TextEditingController _incidentCtrl = TextEditingController();
   final TextEditingController _statementCtrl = TextEditingController();
   bool shareContact = false;
-  List<String> myList = ["Tonny", "Baw"];
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final appViewModel = GetIt.instance<AppViewModel>();
   IncidentViewModel incidentViewModel = IncidentViewModel();
@@ -42,9 +41,16 @@ class _ReportIncidentState extends State<ReportIncident> {
   double? additionalImagesUploadProgress;
   double? videoRecordingUploadProgress;
   final _isSubmitting = ValueNotifier<bool>(false);
+  bool isLoading = false;
 
   String? videoPath;
   String? videoThumbnailPath;
+
+  @override
+  void dispose() {
+    incidentViewModel.repositoryService.setRecordedVideo(null);
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -203,11 +209,16 @@ class _ReportIncidentState extends State<ReportIncident> {
                       const SizedBox(
                         height: 30,
                       ),
-                      ElevatedButton(
-                          onPressed: () {
-                            reportIncident(context, args);
-                          },
-                          child: const Text("Report")),
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: isLoading
+                            ? const Center(child: CircularProgressIndicator())
+                            : ElevatedButton(
+                                onPressed: () {
+                                  reportIncident(context, args);
+                                },
+                                child: const Text("Report")),
+                      ),
                     ]),
                   ),
                 ],
@@ -305,63 +316,100 @@ class _ReportIncidentState extends State<ReportIncident> {
 
   void reportIncident(BuildContext context, ReportIncident args) {
     if (_formKey.currentState!.validate()) {
-      loadingDialog(context, message: "Reporting Incident");
+      // loadingDialog(context, message: "Reporting Incident");
+      setState(() {
+        isLoading = true;
+      });
+      _isSubmitting.value = true;
+
       String incidentId = uuid.v4();
       LocationService()
           .getCurrentLocation()
           .then((LocationData? locationData) async {
-        GeoPoint? geoPoint;
-
-        List<String> additionalImagesDownloadUrls = [];
-
-        setUploadQueue();
-        File videoFile = File(videoPath!);
-
-        String? videoDownloadUrl = await uploadVideo(incidentId, videoFile);
-
-        String? videoThumbnailDownloadUrl;
-        if (videoThumbnailPath != null) {
-          File videoThumbnailFile = File(videoThumbnailPath!);
-          videoThumbnailDownloadUrl = await incidentViewModel
-              .uploadVideoThumbnailFileToStorage(incidentId, videoThumbnailFile)
-              .then((value) {
-            videoThumbnailFile.delete();
-            setState(() {
-              videoRecordingUploadProgress = 1.0;
-            });
-            return value;
-          });
-        }
-
-        additionalImagesDownloadUrls =
-            await uploadAdditionalImageFiles(incidentId);
-
         if (locationData != null) {
-          geoPoint = GeoPoint(locationData.latitude!, locationData.longitude!);
-          Incident incident = Incident(
+          GeoPoint? geoPoint =
+              GeoPoint(locationData.latitude!, locationData.longitude!);
+
+          List<String> additionalImagesDownloadUrls = [];
+
+          setUploadQueue();
+
+          late Incident incident;
+
+          File? videoFile;
+          String? videoDownloadUrl;
+          String? videoThumbnailDownloadUrl;
+
+          if (videoPath != null) {
+            videoFile = File(videoPath!);
+            videoDownloadUrl = await uploadVideo(incidentId, videoFile);
+
+            if (videoThumbnailPath != null) {
+              File videoThumbnailFile = File(videoThumbnailPath!);
+              videoThumbnailDownloadUrl = await incidentViewModel
+                  .uploadVideoThumbnailFileToStorage(
+                      incidentId, videoThumbnailFile)
+                  .then((value) {
+                videoThumbnailFile.delete();
+                setState(() {
+                  videoRecordingUploadProgress = 1.0;
+                });
+                return value;
+              });
+            }
+          }
+          additionalImagesDownloadUrls =
+              await uploadAdditionalImageFiles(incidentId);
+          incident = Incident(
             id: incidentId,
             name: _incidentCtrl.text,
             location: geoPoint,
             dateTime: DateTime.now(),
             statement: _statementCtrl.text,
+            videoUrl: videoDownloadUrl,
+            videoThumbnailUrl: videoThumbnailDownloadUrl,
             imagesDownloadUrls: additionalImagesDownloadUrls,
             userId: shareContact ? appViewModel.repository.profile?.uid : null,
           );
-          incidentViewModel.submitReportedIncident(incident).then((value) {
-            popDialog(context);
-            if (value) {
-              //pop route
-              Navigator.of(context).pop();
+
+          // incidentViewModel.submitReportedIncident(incident).then((value) {
+          //   popDialog(context);
+          //   if (value) {
+          //     //pop route
+          //     Navigator.of(context).pop();
+          //     args.resetSuccess!("report");
+          //   }
+          // });
+
+          try {
+            incidentViewModel.submitReportedIncident(incident).then((value) {
+              setState(() {
+                isLoading = false;
+              });
+              _isSubmitting.value = false;
+              Navigator.pop(context);
               args.resetSuccess!("report");
-            }
-          });
+              showSnack(context, "Incident reported successfully");
+            });
+          } on Exception {
+            _isSubmitting.value = false;
+            showSnack(context, "Failed to report incident");
+          }
         } else {
-          popDialog(context);
+          // popDialog(context);
+          setState(() {
+            isLoading = false;
+          });
+          _isSubmitting.value = false;
           ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Failed to get current location')));
         }
       }).catchError((error) {
-        popDialog(context);
+        // popDialog(context);
+        setState(() {
+          isLoading = false;
+        });
+        _isSubmitting.value = false;
         printDebug("Error getting location: $error");
         ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Error getting current location')));
@@ -370,6 +418,11 @@ class _ReportIncidentState extends State<ReportIncident> {
   }
 
   void setUploadQueue() {
+    if (videoPath != null) {
+      setState(() {
+        videoRecordingUploadProgress = 0.0;
+      });
+    }
     if (additionalImageFiles.isNotEmpty) {
       setState(() {
         additionalImagesUploadProgress = 0.0;
