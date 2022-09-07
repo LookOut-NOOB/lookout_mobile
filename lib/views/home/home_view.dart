@@ -1,10 +1,16 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
+import 'package:intl/intl.dart';
+import 'package:look_out/models/accident.dart';
+import 'package:look_out/models/ambulance_request.dart';
+import 'package:look_out/models/incident.dart';
+import 'package:look_out/models/tip.dart';
+import 'package:look_out/views/home/report_accident.dart';
+import 'package:look_out/views/home/report_incident.dart';
+import 'package:look_out/views/home/request_ambulance.dart';
 
 import '../app_viewmodel.dart';
-import 'alert_tip_info_widget.dart';
-import 'records_tiles.dart';
-import 'report_accident.dart';
 import 'report_incident.dart';
 import 'request_ambulance.dart';
 
@@ -33,7 +39,90 @@ class _HomeViewState extends State<HomeView> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            AlertTipInfoWidget(),
+            FutureBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                future: appViewModel.repository.getTip(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.done) {
+                    if (snapshot.hasData) {
+                      Map<String, dynamic>? map = snapshot.data?.data();
+                      if (map != null) {
+                        Tip sentTip = Tip.fromMap(map);
+                        return Card(
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16)),
+                          child: Container(
+                            width: MediaQuery.of(context).size.width,
+                            padding:
+                                const EdgeInsets.all(8.0).copyWith(bottom: 16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.amber,
+                                        borderRadius: BorderRadius.circular(30),
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 16, vertical: 6),
+                                      child: Text(
+                                        "Tip !",
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .subtitle1!
+                                            .copyWith(color: Colors.white),
+                                      ),
+                                    ),
+                                    Tooltip(
+                                      message: "Close tip",
+                                      child: GestureDetector(
+                                        onTap: () {},
+                                        child: Icon(
+                                          Icons.close_rounded,
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .secondary,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const Divider(
+                                  indent: 8,
+                                ),
+                                Row(
+                                  children: [
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.amber,
+                                        borderRadius: BorderRadius.circular(50),
+                                      ),
+                                      child: const Icon(
+                                        Icons.info_outline_rounded,
+                                        size: 50,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    const SizedBox(
+                                      width: 16,
+                                    ),
+                                    Expanded(
+                                      child: Text(sentTip.tipText),
+                                    ),
+                                  ],
+                                )
+                              ],
+                            ),
+                          ),
+                        );
+                      }
+                    }
+                  }
+                  return const SizedBox();
+                }),
             Card(
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16)),
@@ -134,74 +223,74 @@ class _HomeViewState extends State<HomeView> {
                             ));
                           },
                         ),
-                        quickActionTile(
-                            label: "Record Video",
-                            icon: Stack(
-                              children: [
-                                const Icon(
-                                  Icons.videocam_rounded,
-                                  size: 30,
-                                  color: Colors.grey,
-                                ),
-                                Positioned(
-                                  top: 0,
-                                  left: 0,
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      color:
-                                          Colors.grey.shade300.withOpacity(0.7),
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    child: const Icon(
-                                      Icons.visibility_rounded,
-                                      size: 16,
-                                      color: Colors.grey,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            )),
-                        quickActionTile(
-                            label: "Take pictures",
-                            icon: const Icon(
-                              Icons.photo_camera,
-                              size: 30,
-                              color: Colors.grey,
-                            )),
-                        quickActionTile(
-                            label: "Record Audio",
-                            icon: Stack(
-                              children: [
-                                const Icon(
-                                  Icons.record_voice_over_rounded,
-                                  size: 30,
-                                  color: Colors.grey,
-                                ),
-                                Positioned(
-                                  bottom: 0,
-                                  right: 0,
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      color:
-                                          Colors.grey.shade300.withOpacity(0.7),
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    child: const Icon(
-                                      Icons.mic,
-                                      size: 16,
-                                      color: Colors.grey,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            )),
-                        quickActionTile(
-                            label: "Another action",
-                            icon: const Icon(
-                              Icons.circle_outlined,
-                              size: 40,
-                              color: Colors.grey,
-                            )),
+                        // quickActionTile(
+                        //     label: "Record Video",
+                        //     icon: Stack(
+                        //       children: [
+                        //         const Icon(
+                        //           Icons.videocam_rounded,
+                        //           size: 30,
+                        //           color: Colors.grey,
+                        //         ),
+                        //         Positioned(
+                        //           top: 0,
+                        //           left: 0,
+                        //           child: Container(
+                        //             decoration: BoxDecoration(
+                        //               color:
+                        //                   Colors.grey.shade300.withOpacity(0.7),
+                        //               borderRadius: BorderRadius.circular(20),
+                        //             ),
+                        //             child: const Icon(
+                        //               Icons.visibility_rounded,
+                        //               size: 16,
+                        //               color: Colors.grey,
+                        //             ),
+                        //           ),
+                        //         ),
+                        //       ],
+                        //     )),
+                        // quickActionTile(
+                        //     label: "Take pictures",
+                        //     icon: const Icon(
+                        //       Icons.photo_camera,
+                        //       size: 30,
+                        //       color: Colors.grey,
+                        //     )),
+                        // quickActionTile(
+                        //     label: "Record Audio",
+                        //     icon: Stack(
+                        //       children: [
+                        //         const Icon(
+                        //           Icons.record_voice_over_rounded,
+                        //           size: 30,
+                        //           color: Colors.grey,
+                        //         ),
+                        //         Positioned(
+                        //           bottom: 0,
+                        //           right: 0,
+                        //           child: Container(
+                        //             decoration: BoxDecoration(
+                        //               color:
+                        //                   Colors.grey.shade300.withOpacity(0.7),
+                        //               borderRadius: BorderRadius.circular(20),
+                        //             ),
+                        //             child: const Icon(
+                        //               Icons.mic,
+                        //               size: 16,
+                        //               color: Colors.grey,
+                        //             ),
+                        //           ),
+                        //         ),
+                        //       ],
+                        //     )),
+                        // quickActionTile(
+                        //     label: "Another action",
+                        //     icon: const Icon(
+                        //       Icons.circle_outlined,
+                        //       size: 40,
+                        //       color: Colors.grey,
+                        //     )),
                       ],
                     ),
                   ],
@@ -347,5 +436,128 @@ class _HomeViewState extends State<HomeView> {
             ],
           );
         });
+  }
+
+  showStatusBottomSheet() {
+    // showBottomSheet(context: context, builder: (cont) {});
+  }
+}
+
+class AccidentTile extends StatelessWidget {
+  final Accident accident;
+  const AccidentTile({Key? key, required this.accident}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final TimeOfDay time = TimeOfDay.fromDateTime(accident.dateTime);
+    final String date = DateFormat("EEE, MMM d y").format(accident.dateTime);
+    return Card(
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                Text(
+                  date,
+                  style: TextStyle(color: Colors.black.withOpacity(0.6)),
+                ),
+                Text(" - ${time.format(context)}"),
+              ],
+            ),
+            const Divider(
+              indent: 20,
+            ),
+            const Text("Reported Accident"),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class IncidentTile extends StatelessWidget {
+  final Incident incident;
+  const IncidentTile({Key? key, required this.incident}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final TimeOfDay time = TimeOfDay.fromDateTime(incident.dateTime!);
+    final String date = DateFormat("EEE, MMM d y").format(incident.dateTime!);
+    return Card(
+      color: Colors.grey,
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        margin: const EdgeInsets.only(right: 10),
+        color: Colors.white,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                Text(
+                  date,
+                  style: TextStyle(color: Colors.black.withOpacity(0.6)),
+                ),
+                Text(" - ${time.format(context)}"),
+              ],
+            ),
+            const Divider(
+              indent: 20,
+            ),
+            Text("Reported ${incident.name}"),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class AmbulanceTile extends StatelessWidget {
+  final AmbulanceRequest ambulance;
+  const AmbulanceTile({Key? key, required this.ambulance}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final TimeOfDay time = TimeOfDay.fromDateTime(ambulance.dateTime!);
+    final String date = DateFormat("EEE, MMM d y").format(ambulance.dateTime!);
+    return Card(
+      color: ambulance.status == "3"
+          ? Colors.green
+          : ambulance.status == "2"
+              ? Colors.green.withOpacity(0.5)
+              : Colors.grey,
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        margin: const EdgeInsets.only(right: 10),
+        color: Colors.white,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                Text(
+                  date,
+                  style: TextStyle(color: Colors.black.withOpacity(0.6)),
+                ),
+                Text(" - ${time.format(context)}"),
+              ],
+            ),
+            const Divider(
+              indent: 20,
+            ),
+            const Text("Requested for ambulance"),
+            Text(
+              "status: ${ambulance.status}",
+              style: const TextStyle(color: Colors.black38),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

@@ -27,12 +27,6 @@ class _RingState extends State<Ring> {
     ),
   };
 
-  final Map<int, String> captions = {
-    1: "Connecting...",
-    2: "Ringing...",
-    4: "Ringing...",
-  };
-
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -41,7 +35,7 @@ class _RingState extends State<Ring> {
         child: SingleChildScrollView(
           child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
             const Text(
-              "Ringing...",
+              "Alarm Activated...",
               style: TextStyle(color: Colors.white, fontSize: 18),
             ),
             Stack(
@@ -70,7 +64,7 @@ class _RingState extends State<Ring> {
                     if (widget.action != null) widget.action!();
                   },
                   child: Text(
-                    "Stop Panic",
+                    "Stop Alarm",
                     style: TextStyle(
                         color: Theme.of(context).colorScheme.secondary),
                   ),

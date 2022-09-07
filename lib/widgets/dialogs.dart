@@ -1,5 +1,3 @@
-
-
 import 'package:flutter/material.dart';
 
 loadingDialog(BuildContext context, {String? message}) {
@@ -28,7 +26,8 @@ infoDialog(BuildContext context, {String? message}) {
       children: [
         const Icon(Icons.info_outline),
         Container(
-            margin: const EdgeInsets.only(left: 7), child: Text(message ?? "Done")),
+            margin: const EdgeInsets.only(left: 7),
+            child: Text(message ?? "Done")),
       ],
     ),
     actions: [
@@ -47,6 +46,12 @@ infoDialog(BuildContext context, {String? message}) {
       return alert;
     },
   );
+}
+
+showToast(BuildContext context, {required String message}) {
+  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+    content: Text(message),
+  ));
 }
 
 popDialog(BuildContext context) {

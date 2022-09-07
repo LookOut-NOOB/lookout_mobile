@@ -1,9 +1,11 @@
 import 'package:get_it/get_it.dart';
+import 'package:look_out/views/app_viewmodel.dart';
 
-import '../views/app_viewmodel.dart';
+import 'repository_service.dart';
 
-final locator = GetIt.instance;
+final getIt = GetIt.instance;
 
 void setup() {
-  locator.registerSingleton<AppViewModel>(AppViewModel());
+  getIt.registerSingleton<AppViewModel>(AppViewModel());
+  getIt.registerSingleton<RepositoryService>(RepositoryService());
 }

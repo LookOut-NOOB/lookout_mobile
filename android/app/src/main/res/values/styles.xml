@@ -15,4 +15,10 @@
     <style name="NormalTheme" parent="@android:style/Theme.Light.NoTitleBar">
         <item name="android:windowBackground">?android:colorBackground</item>
     </style>
+
+    <style name="flutter_auth_ui_style">
+        <item name="colorPrimary">#ed1f44</item>
+        <item name="colorPrimaryDark">#ed1f44</item>
+        <item name="colorAccent">#ed1f44</item>
+    </style>
 </resources>

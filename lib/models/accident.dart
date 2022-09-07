@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class Accident {
   final String type = "accident";
   String id;
-  String location;
+  GeoPoint location;
   String? statement;
   String? userId;
   DateTime dateTime;

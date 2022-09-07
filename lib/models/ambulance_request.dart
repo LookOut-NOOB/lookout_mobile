@@ -3,11 +3,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class AmbulanceRequest {
   final String type = "ambulance";
   String id;
-  String location;
+  GeoPoint location;
   String status;
   String? userId;
   DateTime? dateTime;
   String comment;
+  String? ambulanceId;
   String? ambulanceName;
   String? ambulancePhoneNo;
 
@@ -18,6 +19,7 @@ class AmbulanceRequest {
     required this.comment,
     required this.userId,
     required this.dateTime,
+    this.ambulanceId,
     this.ambulanceName,
     this.ambulancePhoneNo,
   });
@@ -30,6 +32,7 @@ class AmbulanceRequest {
       userId: map['action'],
       comment: map['comment'],
       location: map['location'],
+      ambulanceId: map['ambulanceId'],
       ambulanceName: map['ambulanceName'],
       ambulancePhoneNo: map['ambulancePhoneNo'],
       dateTime:
@@ -40,6 +43,7 @@ class AmbulanceRequest {
   Map<String, dynamic> toMap() {
     return {
       'id': id,
+      'service': 'ambulance',
       'status': status,
       'comment': comment,
       'location': location,
@@ -48,3 +52,9 @@ class AmbulanceRequest {
     };
   }
 }
+
+ ///Ambulance request status
+///1=>pending
+///2=>accepted
+///3=>complete
+///0=>cancelled
